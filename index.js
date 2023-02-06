@@ -31,7 +31,7 @@ async function run() {
 run().catch(err => console.log(err.message.red.bold))
 
 //collections
-const billingsCollection = client.db('powerHack').collection('billings')
+const foodsCollection = client.db('RedOnionResturent').collection('Foods')
 
 //common funcions 
 
@@ -56,60 +56,38 @@ function verifyJwt(req, res, next) {
 
 //root api
 app.get('/', (req, res) => {
-    res.send('powerHack server is running')
+    res.send('red-onion-resturent server is running')
 })
 
 //api for getting billing list.
-app.get('/billing-list', verifyJwt, async (req, res) => {
+app.get('/meals', async (req, res) => {
     try {
-        const page = req.query.page
         const query = {}
-        const billList = await billingsCollection.find(query).sort({ _id: -1 }).skip(page * 10).limit(10).toArray()
-        const count = await billingsCollection.estimatedDocumentCount()
-        res.send({ count, billList })
+        const data = await foodsCollection.find(query).toArray()
+        res.send({ status: 200, data })
     }
     catch (error) {
         res.send(error.message)
     }
 })
 
-//api for getting a single bill 
-app.get('/bill', verifyJwt, async (req, res) => {
+app.get('/meals/:category', async (req, res) => {
     try {
-        const id = req.query.id
-        const query = { _id: ObjectId(id) }
-        const bill = await billingsCollection.findOne(query)
-        res.send(bill)
+        const { category } = req.params;
+        const data = await foodsCollection.find({ Category: category }).toArray()
+        res.send({ status: 200, data })
     }
     catch (error) {
         res.send(error.message)
     }
 })
 
-//api for posting single bookings of client
-app.post('/add-billing', verifyJwt, async (req, res) => {
-    try {
-        const bill = req.body
-        const result = await billingsCollection.insertOne(bill)
-        res.send(result)
-    }
-    catch (error) {
-        console.log(error);
-        res.send(error.message)
-    }
-})
-
-//api for deleting bill
-app.delete('/delete-billing/:id', verifyJwt, async (req, res) => {
-    try {
-        const id = req.params.id
-        const query = { _id: ObjectId(id) }
-        const result = await billingsCollection.deleteOne(query)
-        res.send(result)
-    }
-    catch (error) {
-        res.send(error.message)
-    }
+//get a specific meal by Id 
+app.get('/meal/:mealId', async (req, res) => {
+    const mealId = req.params
+    //console.log(mealId);
+    const meal = await foodsCollection.findOne({ _id: ObjectId(mealId.mealId) })
+    res.send(meal)
 })
 
 //-----------------------JWT token ---------------------//
